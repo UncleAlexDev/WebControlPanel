@@ -710,7 +710,7 @@
 
     <!-- Страница 5: Телеметрия -->
     <div id='view_telemetry' class='page-view' style='display: none; padding: 20px;'>
-        <div class='display-telemetry' style='display: grid; grid-template-columns: 220px 230px 300px max-content; gap: 20px 20px; align-items: center;'>
+        <div class='display-telemetry' style='display: grid; grid-template-columns: 220px 300px 300px max-content; gap: 10px 20px; align-items: center;'>
 
             <span style='font-weight:bold;'>Время работы ПО</span>
             <div id='fld_uptime2' style='grid-column: span 3; padding: 2px 0; font-weight: bold;'>&nbsp;</div>
@@ -729,23 +729,45 @@
 
             <span style='font-weight:bold;'>Энкодер №1</span>
             <div id="fld_enc1" style='padding: 2px 0; font-weight: bold; font-size: 1.4em;'>&nbsp;</div>
-            <span style='font-weight:bold; text-align: left; margin-left: 50px;'>Задержка для основного<br>датчика давления</span>
+            <span style='font-weight:bold; text-align: left;'>Задержка для основного<br>датчика давления</span>
             <div id="fld_dptdelay" style='padding: 2px 0; font-weight: bold;'>&nbsp;</div>
 
             <span style='font-weight:bold;'>Энкодер №2</span>
             <div id="fld_enc2" style='padding: 2px 0; font-weight: bold; font-size: 1.4em;'>&nbsp;</div>
-            <span style='font-weight:bold; text-align: left; margin-left: 50px;'>Перестановка<br>каналов 1/2</span>
+            <span style='font-weight:bold; text-align: left;'>Перестановка<br>каналов 1/2</span>
             <div id="fld_swapch12" style='padding: 2px 0; font-weight: bold;'>&nbsp;</div>
 
             <span style='font-weight:bold;'>Отправлено пакетов</span>
             <div id="fld_sentok" style='padding: 2px 0; font-weight: bold;'>&nbsp;</div>
-            <span style='font-weight:bold; text-align: left; margin-left: 50px;'>Wits пакетов</span>
+            <span style='font-weight:bold; text-align: left;'>Wits пакетов</span>
             <div id="fld_witsok" style='padding: 2px 0; font-weight: bold;'>&nbsp;</div>
 
             <span style='font-weight:bold;'>Ошибок</span>
             <div id="fld_senterr" style='padding: 2px 0; font-weight: bold;'>&nbsp;</div>
-            <span style='font-weight:bold; text-align: left; margin-left: 50px;'>Wits ошибок</span>
+            <span style='font-weight:bold; text-align: left;'>Wits ошибок</span>
             <div id="fld_witserr" style='padding: 2px 0; font-weight: bold;'>&nbsp;</div>
+
+
+            <div id="fld_addr1" style='padding: 2px 0; font-size: 0.6em; font-weight: bold;'>&nbsp;</div>
+            <div id="fld_err11" style='padding: 2px 0; font-size: 0.6em; font-weight: bold; grid-column: span 3;'>&nbsp;</div>
+
+            <span style='font-weight:bold;'>&nbsp;</span>
+            <div id="fld_err12" style='padding: 2px 0; font-size: 0.6em; font-weight: bold;grid-column: span 3;'>&nbsp;</div>
+
+            <!-- -->
+            <div id="fld_addr2" style='padding: 2px 0; font-size: 0.6em; font-weight: bold;'>&nbsp;</div>
+            <div id="fld_err21" style='padding: 2px 0; font-size: 0.6em; font-weight: bold; grid-column: span 3;'>&nbsp;</div>
+
+            <span style='font-weight:bold;'>&nbsp;</span>
+            <div id="fld_err22" style='padding: 2px 0; font-size: 0.6em; font-weight: bold;grid-column: span 3;'>&nbsp;</div>
+
+            <!-- -->
+            <div id="fld_addr3" style='padding: 2px 0; font-size: 0.6em; font-weight: bold;'>&nbsp;</div>
+            <div id="fld_err31" style='padding: 2px 0; font-size: 0.6em; font-weight: bold; grid-column: span 3;'>&nbsp;</div>
+
+            <span style='font-weight:bold;'>&nbsp;</span>
+            <div id="fld_err32" style='padding: 2px 0; font-size: 0.6em; font-weight: bold;grid-column: span 3;'>&nbsp;</div>
+
         </div>
     </div>
 
@@ -795,6 +817,7 @@
           <ul>
               <li class="remark-title">Формат обновления:</li>
               <li>обновление - это файл-архив, сжатие zip</li>
+              <li>размер - не более 50М</li>
               <li>внутри каталог</li>
               <li>имена любые</li>
               <li>содержимое обновления должно соответствовать назначению (имеется контроль файлов)</li>

@@ -333,11 +333,64 @@ function loadTelemetry()
             document.getElementById('fld_ch4avrgv' ).innerHTML = str1[3] + " &nbsp; " + str2[3] + "&nbsp; " + str3[3];
 
             document.getElementById('fld_sentok'  ).innerHTML = data.sentok   ? data.sentok   : "-";
-            document.getElementById('fld_senterr' ).innerHTML = data.senter   ? data.senter   : "-";
+            document.getElementById('fld_senterr' ).innerHTML = data.senterr  ? data.senterr  : "-";
             document.getElementById('fld_witsok'  ).innerHTML = data.witsok   ? data.witsok   : "-";
-            document.getElementById('fld_witserr' ).innerHTML = data.witser   ? data.witser   : "-";
+            document.getElementById('fld_witserr' ).innerHTML = data.witserr  ? data.witserr  : "-";
             document.getElementById('fld_dptdelay').innerHTML = data.dptdelay ? data.dptdelay : "-";
             document.getElementById('fld_swapch12').innerHTML = data.swapch12 ? data.swapch12 : "-";
+
+            // console.log(JSON.stringify(data));
+
+            for (let i = 1; i <= 3; i++) {
+                // Безопасно очищаем входящую строку от системных переносов строк (\r, \n), если они там есть
+                const raw = data['send' + i] ? data['send' + i].replace(/[\r\n]+/g, '') : '';
+
+                if (raw) {
+                    const arr = raw.split(';');
+
+                    //
+                    const fill_field_func = (id, value, isError) => {
+                        const field = document.getElementById(id);
+                        if (field) {
+                            field.innerHTML = value.trim();
+                            field.style.color = isError ? '#d32f2f' : '#888888';
+                        }
+                    };
+
+                    //
+                    const parse_error_func = (ipaddr, port_idx, msg_idx) => {
+                        const port = arr[port_idx] ? arr[port_idx].trim() : '';
+                        const msg  = arr[msg_idx]  ? arr[msg_idx].trim()  : '';
+
+                        if (!msg) {
+                            if (ipaddr) {
+                                return { text: `${port}:ok`, isError: false };
+                            }
+                            return { text: '', isError: false };
+                        }
+
+                        if (port) {
+                            return { text: `${port}:${msg}`, isError: true };
+                        }
+                        return { text: msg, isError: true };
+                    };
+
+                    //
+                    const ip_addr = arr[0] || '';
+                    const field = document.getElementById(`fld_addr${i}`);
+                    if (field) {
+                        field.innerHTML = ip_addr.trim();
+                        field.style.color = '';
+                    }
+
+                    const err1 = parse_error_func(ip_addr, 1, 2);
+                    fill_field_func(`fld_err${i}1`, err1.text, err1.isError);
+
+                    const err2 = parse_error_func(ip_addr, 3, 4);
+                    fill_field_func(`fld_err${i}2`, err2.text, err2.isError);
+                }
+            }
+
         })
         .catch(err => {
             document.getElementById('fld_uptime2' ).innerHTML = "-";

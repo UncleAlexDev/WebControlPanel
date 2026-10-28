@@ -1,0 +1,11 @@
+﻿> cd bbi2-WebControlPanel
+> dir 
+
+ Directory of bbi2-WebControlPanel
+14.08.2026  11:00    <DIR>          .
+14.08.2026  10:55    <DIR>          ..
+13.08.2026  22:05            38 699 siu-web-panel-1.0.5-bin-20260813-220525.zip
+
+> unzip siu-web-panel-1.0.5-bin-20260813-220525.zip
+> cd siu-web-panel-1.0.5-bin-20260813-220525
+> scp -r . root@192.168.1.84:/var/www/

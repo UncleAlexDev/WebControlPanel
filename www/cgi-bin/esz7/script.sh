@@ -112,24 +112,53 @@ set_system_time()
     fi
 }
 
+get_versions()
+{
+    V_SERIAL=$(cat /etc/serialno 2>/dev/null || echo "N/A")
+    V_SYSTEM=$(cat /etc/os-release 2>/dev/null | grep PRETTY_NAME | cut -d"=" -f 2 | sed s/\"//g || echo "Unknown")
+    V_OSNAME=$(uname -a | sed 's/PREEMPT/PREEMPT<br>/')
+    V_FW_NAME=$(cat /sys/firmware/devicetree/base/amba/esz7@43c00000/name 2>/dev/null | tr -d '\n\r"')
+    V_FW_VER=$(cat /sys/firmware/devicetree/base/amba/esz7@43c00000/version 2>/dev/null | tr -d '\n\r"')
+    V_MOD_VER=$(cat /sys/devices/soc0/amba/43c00000.esz7/version 2>/dev/null | grep Module)
+    V_ROOTFS_VER=$(head -n 1 /etc/rootfs.issue)
+
+    V_FMWVER="DeviceTree: ${V_FW_NAME} ${V_FW_VER}<br>${V_MOD_VER}<br>Rootfs: ${V_ROOTFS_VER}"
+
+    local STR=$(${BINDIR}/esz7 --version 2>/dev/null)
+    V_APP1VER=$(echo "$STR" | cut -d'[' -f 1 | tr -d '\r\n')
+    [ -z "$V_APP1VER" ] && V_APP1VER="[no firmware]"
+
+    if which script; then 
+        STR=$(script -q -c "${BINDIR}/esz7-term -v" /dev/null)
+    else
+        STR=$(${BINDIR}/esz7-term -v 2>/dev/null)
+    fi
+    V_APP2VER=$(echo "$STR" | cut -d '[' -f 1 | tr -d '\n\r')
+
+    V_WCPVER="---"
+    [ -f "${WCPVERFILE}" ] && V_WCPVER=$(cat ${WCPVERFILE} 2>/dev/null | tr -d '\n\r')
+}
+
 api_get_status()
 {
     get_system_time
     local TIME="$DATE<br>[$TIMEZONE]"
+    get_versions
 
-    local SERIAL=$(cat /etc/serialno 2>/dev/null || echo "N/A")
-    local SYSTEM=$(cat /etc/os-release 2>/dev/null | grep PRETTY_NAME | cut -d"=" -f 2 | sed s/\"//g || echo "Unknown")
-    local OSNAME=$(uname -a | sed 's/PREEMPT/PREEMPT<br>/')
-    local FW_NAME=$(cat /sys/firmware/devicetree/base/amba/esz7@43c00000/name 2>/dev/null | tr -d '\n\r"')
-    local FW_VER=$(cat /sys/firmware/devicetree/base/amba/esz7@43c00000/version 2>/dev/null | tr -d '\n\r"')
-    local MOD_VER=$(cat /sys/devices/soc0/amba/43c00000.esz7/version 2>/dev/null | grep Module)
-    local ROOTFS_VER=$(head -n 1 /etc/rootfs.issue)
-    local FMWVER="Firmware: ${FW_VER}<br>Linux ${MOD_VER}<br>Rootfs: ${ROOTFS_VER}"
-    local IPADR=$(ip addr show 2>/dev/null | awk '/inet / {print$2}' | cut -d '/' -f 1 | head -n 1)
+    #local SERIAL=$(cat /etc/serialno 2>/dev/null || echo "N/A")
+    #local SYSTEM=$(cat /etc/os-release 2>/dev/null | grep PRETTY_NAME | cut -d"=" -f 2 | sed s/\"//g || echo "Unknown")
+    #local OSNAME=$(uname -a | sed 's/PREEMPT/PREEMPT<br>/')
+    #local FW_NAME=$(cat /sys/firmware/devicetree/base/amba/esz7@43c00000/name 2>/dev/null | tr -d '\n\r"')
+    #local FW_VER=$(cat /sys/firmware/devicetree/base/amba/esz7@43c00000/version 2>/dev/null | tr -d '\n\r"')
+    #local MOD_VER=$(cat /sys/devices/soc0/amba/43c00000.esz7/version 2>/dev/null | grep Module)
+    #local ROOTFS_VER=$(head -n 1 /etc/rootfs.issue)
+    #local FMWVER="DeviceTree: ${FW_VER} ${FW_VER}<br>Linux ${MOD_VER}<br>Rootfs: ${ROOTFS_VER}"
+    #local IPADR=$(ip addr show 2>/dev/null | awk '/inet / {print$2}' | cut -d '/' -f 1 | head -n 1)
+    #local STR=$(${BINDIR}/esz7 --version 2>/dev/null)
+    #local APPVER=$(echo "$STR" | cut -d'[' -f 1 | tr -d '\n')
+    #[ -z "$APPVER" ] && APPVER="[no firmware]"
 
-    local STR=$(${BINDIR}/esz7 --version 2>/dev/null)
-    local APPVER=$(echo "$STR" | cut -d'[' -f 1 | tr -d '\n')
-    [ -z "$APPVER" ] && APPVER="[no firmware]"
+    IPADR=$(ip addr show 2>/dev/null | awk '/inet / {print$2}' | cut -d '/' -f 1 | head -n 1)
 
     local STATUS="STOP"
     local STR="$(ps a | grep -E '(/| )esz7$' | awk '{print $1}')"
@@ -147,13 +176,13 @@ api_get_status()
     echo "  \"mode\":    \"${MODE}\",  "
     echo "  \"time\":    \"${TIME}\",  "
     echo "  \"uptime\":  \"${UPTIME}\","
-    echo "  \"serial\":  \"${SERIAL}\","
-    echo "  \"ipadr\":   \"${IPADR}\", "
-    echo "  \"appver\":  \"${APPVER}\","
     echo "  \"status\":  \"${STATUS}\","
-    echo "  \"system\":  \"${SYSTEM}\","
-    echo "  \"osname\":  \"${OSNAME}\","
-    echo "  \"fmwver\":  \"${FMWVER}\","
+    echo "  \"ipadr\":   \"${IPADR}\", "
+    echo "  \"serial\":  \"${V_SERIAL}\","
+    echo "  \"appver\":  \"${V_APP1VER}\","
+    echo "  \"system\":  \"${V_SYSTEM}\","
+    echo "  \"osname\":  \"${V_OSNAME}\","
+    echo "  \"fmwver\":  \"${V_FMWVER}\","
     echo "  \"tasks\":   \"${TASKS}\", "
     echo "  \"cfgname\": \"${CFGNAME}\""
     echo "}"
@@ -190,35 +219,15 @@ api_get_setup()
 
 api_get_versions()
 {
-    local STR=$(${BINDIR}/esz7 -v 2>/dev/null)
-    local APP1VER=$(echo "$STR" | cut -d '[' -f 1 | tr -d '\n\r')
-
-    if which script; then 
-        STR=$(script -q -c "${BINDIR}/esz7-term -v" /dev/null)
-    else
-        STR=$(${BINDIR}/esz7-term -v 2>/dev/null)
-    fi
-    local APP2VER=$(echo "$STR" | cut -d '[' -f 1 | tr -d '\n\r')
-
-    if [ -f "${WCPVERFILE}" ]; then
-        WCPVER=$(cat ${WCPVERFILE} 2>/dev/null | tr -d '\n\r')
-    else
-        WCPVER="unknown"
-    fi
-
-    local FW_VER=$(cat /sys/firmware/devicetree/base/amba/esz7@43c00000/version 2>/dev/null | tr -d '\n\r"')
-    local MOD_VER=$(cat /sys/devices/soc0/amba/43c00000.esz7/version 2>/dev/null | grep Module | tr -d '\n\r"')
-    local ROOTFS_VER=$(head -n 1 /etc/rootfs.issue)
-    local FMWVER="Firmware: ${FW_VER}<br>Linux ${MOD_VER}<br>Rootfs: ${ROOTFS_VER}"
-
+    get_versions
     echo "Content-Type: application/json"
     echo "Cache-Control: no-cache"
     echo ""
     echo ""
     echo "{"
-    echo "  \"app_ver\": \"esz7.zip &nbsp;&nbsp;&nbsp;&nbsp; ${APP1VER}<br>esz7-term.zip ${APP2VER}\","
-    echo "  \"wcp_ver\": \"wcp.zip<br>Web Control Panel Ver. ${WCPVER}\","
-    echo "  \"fmw_ver\": \"xme072420.zip<br>${FMWVER}\""
+    echo "  \"app_ver\": \"esz7.zip &nbsp;&nbsp;&nbsp;&nbsp; ${V_APP1VER}<br>esz7-term.zip ${V_APP2VER}\","
+    echo "  \"wcp_ver\": \"wcp.zip<br>Web Control Panel Ver. ${V_WCPVER}\","
+    echo "  \"fmw_ver\": \"xme072420.zip<br>${V_FMWVER}\""
     echo "}"
 }
 
@@ -233,16 +242,20 @@ api_get_telemetry()
     SENT_ER="0"
 
     if [ -r "${TELEMETRYFILE}" ]; then
-        while IFS=' ' read -r key val1 val2 val3; do
-            set -- $key $val1 $val2 $val3
+        while IFS=' ' read -r key val1 val2 val3 $val4 $val5 $val6 $val7; do
+            set -- $key $val1 $val2 $val3 $val4 $val5 $val6 $val7
             case "$1" in
-                enc: )    ENC1=$2;    ENC2=$3     ;;
-                sent:)    SENT_OK=$2; SENT_ER=$3  ;;
-                wits:)    WITS_OK=$2; WITS_ER=$3  ;;
-                ch1avrg:) CH1AVRG=$3  CH1AVRGV=$4 ;;
-                ch2avrg:) CH2AVRG=$3  CH2AVRGV=$4 ;;
-                ch3avrg:) CH3AVRG=$3  CH3AVRGV=$4 ;;
-                ch4avrg:) CH4AVRG=$3  CH4AVRGV=$4 ;;
+                enc: )    ENC1="$2";    ENC2=$3     ;;
+                sentok:)  SENT_OK="$2"; SENT_ER="$3"  ;;
+                wits:)    WITS_OK="$2"; WITS_ER="$3"  ;;
+                ch1avrg:) CH1AVRG="$3"; CH1AVRGV="$4" ;;
+                ch2avrg:) CH2AVRG="$3"; CH2AVRGV="$4" ;;
+                ch3avrg:) CH3AVRG="$3"; CH3AVRGV="$4" ;;
+                ch4avrg:) CH4AVRG="$3"; CH4AVRGV="$4" ;;
+
+                sendto1:) SEND1="$2 $3 $4 $5 $6 $7" ;;
+                sendto2:) SEND2="$2 $3 $4 $5 $6 $7" ;;
+                sendto3:) SEND3="$2 $3 $4 $5 $6 $7" ;;
             esac
         done < "${TELEMETRYFILE}"
     fi
@@ -251,13 +264,12 @@ api_get_telemetry()
         while IFS='=' read -r key val; do
             set -- $key $val
             case "$1" in
-                DPT_DELAY) STATUS_DPTDELAY="$2 мс" ;;
-                SWAP_CH12) STATUS_SWAPCH12="$2" ;;
+                dpt_delay) STATUS_DPTDELAY="$2 мс" ;;
+                swap_ch12) STATUS_SWAPCH12="$2" ;;
             esac
         done < "${STATUSFILE}"
 
-        [ "$STATUS_SWAPCH12" = "1" ] && STATUS_SWAPCH12="[Да]" || STATUS_SWAPCH12="[Нет]"
-
+        [ "$STATUS_SWAPCH12" = "1" ] || [ "$STATUS_SWAPCH12" = "yes" ] && STATUS_SWAPCH12="[Да]" || STATUS_SWAPCH12="[Нет]"
     fi
 
     echo "Content-type: application/json"
@@ -279,10 +291,14 @@ api_get_telemetry()
     echo "  \"ch3avrgv\":  \"${CH3AVRGV}\","
     echo "  \"ch4avrgv\":  \"${CH4AVRGV}\","
 
+    echo "  \"send1\":     \"${SEND1}\","
+    echo "  \"send2\":     \"${SEND2}\","
+    echo "  \"send3\":     \"${SEND3}\","
+
     echo "  \"sentok\":   \"${SENT_OK}\","
-    echo "  \"senter\":   \"${SENT_ER}\","
+    echo "  \"senterr\":  \"${SENT_ER}\","
     echo "  \"witsok\":   \"${WITS_OK}\","
-    echo "  \"witser\":   \"${WITS_ER}\","
+    echo "  \"witserr\":  \"${WITS_ER}\","
     echo "  \"dptdelay\": \"${STATUS_DPTDELAY}\","
     echo "  \"swapch12\": \"${STATUS_SWAPCH12}\" "
     echo "}"
@@ -1089,8 +1105,8 @@ fi
 
 if [ ! -z "$QUERY_STRING" ]; then
     UPLOAD_APP=$(echo "$QUERY_STRING" | grep "action=update_app")
-    [ -z "${UPLOAD_WCP}" ] && UPLOAD_WCP=$(echo "$QUERY_STRING" | grep "action=update_wcp")
-    [ -z "${UPLOAD_FWM}" ] && UPLOAD_FMW=$(echo "$QUERY_STRING" | grep "action=update_firmware")
+    [ -z "${UPLOAD_APP}" ] && UPLOAD_WCP=$(echo "$QUERY_STRING" | grep "action=update_wcp")
+    [ -z "${UPLOAD_WCP}" ] && UPLOAD_FMW=$(echo "$QUERY_STRING" | grep "action=update_firmware")
 fi
 
 if [ ! -z "${UPLOAD_APP}" ] || [ ! -z "${UPLOAD_WCP}" ] || [ ! -z "${UPLOAD_FMW}" ]; then
